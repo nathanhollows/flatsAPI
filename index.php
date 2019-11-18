@@ -4,11 +4,12 @@ error_reporting(E_ALL);
 ini_set('display_errors', TRUE);
 ini_set('display_startup_errors', TRUE);
 
+use Phalcon\Db\Adapter\Pdo\Mysql as PdoMysql;
+use Phalcon\Di\FactoryDefault;
 use Phalcon\Http\Response;
 use Phalcon\Loader;
 use Phalcon\Mvc\Micro;
-use Phalcon\Di\FactoryDefault;
-use Phalcon\Db\Adapter\Pdo\Mysql as PdoMysql;
+use Phalcon\Security\Random;
 
 $loader = new Loader();
 
@@ -50,9 +51,71 @@ $app->get(
             WHERE dateRemoved IS NULL
             ORDER BY dateAdded';
 
-        $flats = $app->modelsManager->executeQuery($phql)->getFirst();
+        $flats = $app->modelsManager->executeQuery($phql);
 
         echo json_encode($flats);
+    }
+);
+
+$app->post(
+    '/api/flats',
+    function() use ($app) {
+        $request = $app->request;
+
+        $phql = 'INSERT INTO App\Models\Flats
+            (id, price, bedrooms, bathrooms, parking, heroText, 
+            description, agent, image, type, dateAvailable, 
+            pets, address) VALUES
+            (:id:, :price:, :bedrooms:, :bathrooms:, :parking:, :heroText:, 
+            :description:, :agent:, :image:, :type:, :dateAvailable:, 
+            :pets:, :address:)';
+
+        $random = new Random();
+        $uuid = $random->uuid();
+
+        $status = $app->modelsManager->executeQuery(
+            $phql,
+            [
+                'id'=> $uuid,
+                'price' => $request->getPost("price", "absint", null),
+                'bedrooms' => $request->getPost("bedrooms", "absint", null),
+                'bathrooms' => $request->getPost("bathrooms", "absint", null),
+                'parking' => $request->getPost("parking", "absint", null),
+                'heroText' => $request->getPost("heroText", "string", null),
+                'description' => $request->getPost("description", "string", null),
+                'agent' => $request->getPost("agent", "string", null),
+                'image' => $request->getPost("image", "string", null),
+                'type' => $request->getPost("type", "string", null),
+                'dateAvailable' => $request->getPost("dateAvailble", null, date("Y-m-d")),
+                'pets' => $request->getPost("pets", "absint", null),
+                'address' => $request->getPost("address", "string", null),
+            ]
+        );
+
+        $response = new Response();
+
+        if ($status->success()) {
+            $response->setStatusCode(201, 'Created');
+            $response->setJsonContent([
+                'status'    => 'OK',
+                'data'      => $uuid,
+            ]);
+        } else {
+            $response->setStatusCode(409, 'Conflict');
+
+            $errors = [];
+
+            foreach ($status->getMessages() as $message) {
+                $errors[] = $message->getMessage();
+            }
+
+            $response->setJsonContent([
+                'status'    => 'ERROR',
+                'messages'  => $errors,
+            ]);
+        }
+
+        return $response;
     }
 );
 

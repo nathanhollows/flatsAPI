@@ -6,5 +6,6 @@ The API is currently being tested on [nathanhollows.com/flats/](https://nathanho
 | Method | Url | Action |
 |:------ |:--- |:------ |
 | `GET`  | /api/flats | Retrives all current flats, sorted by date added |
+| `POST` | /api/flats | Save a new listing. Returns the ID | 
 | `GET`  | /api/flats/id/{id} | Retrieve a flat by ID |
 | `DELETE` | /api/flats/id/{id} | Remove a flat from the listings |
