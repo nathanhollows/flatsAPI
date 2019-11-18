@@ -10,6 +10,8 @@ The API is currently being tested on [nathanhollows.com/flats/](https://nathanho
 | `GET`  | /api/flats/id/{id} | Retrieve a flat by ID |
 | `DELETE` | /api/flats/id/{id} | Remove a flat from the listings |
 
+Content type must be `application/x-www-form-urlencoded` (for now)
+
 ## Fields
 
 | Value | Type | Default | Description |
