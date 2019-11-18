@@ -47,13 +47,21 @@ $app->get(
 $app->get(
     '/api/flats',
     function() use ($app) {
-        $phql = 'SELECT * FROM App\Models\Flats 
+        $phql = 'SELECT id, price, bedrooms, bathrooms, parking,
+                    heroText, description, agent, image, url, type,
+                    dateAdded, dateAvailable, pets, address
+            FROM App\Models\Flats 
             WHERE dateRemoved IS NULL
             ORDER BY dateAdded';
 
         $flats = $app->modelsManager->executeQuery($phql);
 
-        echo json_encode($flats);
+        $response = new Response();
+        $response->setJsonContent([
+            'status' => 'OK',
+            'data'  => $flats,
+        ]);
+        return $response;
     }
 );
 
@@ -85,6 +93,7 @@ $app->post(
                 'description' => $request->getPost("description", "string", null),
                 'agent' => $request->getPost("agent", "string", null),
                 'image' => $request->getPost("image", "string", null),
+                'url' => $request->getPost("url", "string", null),
                 'type' => $request->getPost("type", "string", null),
                 'dateAvailable' => $request->getPost("dateAvailble", null, date("Y-m-d")),
                 'pets' => $request->getPost("pets", "absint", null),
@@ -138,7 +147,7 @@ $app->delete(
     '/api/flats/id/{id}',
     function($id) use ($app) {
         $phql = 'UPDATE App\Models\Flats
-            SET dateRemoved = CURRENT_TIMESTAMP
+            SET dateRemoved = CURRENT_TIMESTAMP()
             WHERE id = :id:';
 
         $status = $app->modelsManager->executeQuery(
