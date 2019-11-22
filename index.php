@@ -47,12 +47,16 @@ $app->get(
 $app->get(
     '/api/flats',
     function() use ($app) {
-        $phql = 'SELECT id, price, bedrooms, bathrooms, parking,
+        $limit = $app->request->get("limit", "int", 10000);
+        $offset = $app->request->get("offset", "int", 0);
+        $phql = "SELECT id, price, bedrooms, bathrooms, parking,
                     heroText, description, agent, image, url, type,
                     dateAdded, dateAvailable, pets, address
             FROM App\Models\Flats 
             WHERE dateRemoved IS NULL
-            ORDER BY dateAdded';
+            ORDER BY dateAdded
+            LIMIT $limit
+            OFFSET $offset";
 
         $flats = $app->modelsManager->executeQuery($phql);
 
@@ -73,10 +77,10 @@ $app->post(
         $phql = 'INSERT INTO App\Models\Flats
             (id, price, bedrooms, bathrooms, parking, heroText, 
             description, agent, image, type, dateAvailable, 
-            pets, address) VALUES
+            pets, address, url) VALUES
             (:id:, :price:, :bedrooms:, :bathrooms:, :parking:, :heroText:, 
             :description:, :agent:, :image:, :type:, :dateAvailable:, 
-            :pets:, :address:)';
+            :pets:, :address:, :url:)';
 
         $random = new Random();
         $uuid = $random->uuid();
@@ -85,6 +89,7 @@ $app->post(
             $phql,
             [
                 'id'=> $uuid,
+                'address' => $request->getPost("address", "string", null),
                 'price' => $request->getPost("price", "absint", null),
                 'bedrooms' => $request->getPost("bedrooms", "absint", null),
                 'bathrooms' => $request->getPost("bathrooms", "absint", null),
@@ -97,7 +102,6 @@ $app->post(
                 'type' => $request->getPost("type", "string", null),
                 'dateAvailable' => $request->getPost("dateAvailble", null, date("Y-m-d")),
                 'pets' => $request->getPost("pets", "absint", null),
-                'address' => $request->getPost("address", "string", null),
             ]
         );
 
