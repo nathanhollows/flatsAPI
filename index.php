@@ -48,12 +48,16 @@ $app->get(
     '/api/flats',
     function() use ($app) {
         $limit = $app->request->get("limit", "int", 10000);
+        $search = $app->request->getQuery("search", "string");
         $offset = $app->request->get("offset", "int", 0);
         $phql = "SELECT id, price, bedrooms, bathrooms, parking,
                     heroText, description, agent, image, url, type,
                     dateAdded, dateAvailable, pets, address
             FROM App\Models\Flats 
             WHERE dateRemoved IS NULL
+            AND (address LIKE '%$search%'
+            OR heroText LIKE '%$search%'
+            OR description LIKE '%$search%')
             ORDER BY dateAdded
             LIMIT $limit
             OFFSET $offset";
