@@ -44,23 +44,49 @@ $app->get(
     }
 );
 
+// I am not proud of this.
+// TODO: Move to paginator
+// TODO: Move to query builder
 $app->get(
     '/api/flats',
     function() use ($app) {
+        $listings = $app->modelsManager->createBuilder();
+
         $limit = $app->request->get("limit", "int", 10000);
-        $search = $app->request->getQuery("search", "string");
         $offset = $app->request->get("offset", "int", 0);
+
+        $filter = "";
+
+        $search = $app->request->getQuery("search", "string", "");
+        if ($search != "") {
+            $filter = "AND (address LIKE '%$search%'
+            OR heroText LIKE '%$search%'
+            OR description LIKE '%$search%')";
+        }
+
+        if ($app->request->hasQuery("priceLow")) {
+            $filter = $filter . " AND price >= " . $app->request->getQuery('priceLow', 'absint', 0);
+        }
+
+        if ($app->request->hasQuery("priceHigh")) {
+            $filter = $filter . " AND price <= " . $app->request->getQuery('priceHigh', 'absint', 0);
+        }
+
+        if ($app->request->hasQuery("bedsLow")) {
+            $filter = $filter . " AND bedrooms >= " . $app->request->getQuery('bedsLow', 'absint', 0);
+        }
+
+        if ($app->request->hasQuery("bedsHigh")) {
+            $filter = $filter . " AND bedrooms <= " . $app->request->getQuery('bedsLow', 'absint', 0);
+        }
+
         $phql = "SELECT id, price, bedrooms, bathrooms, parking,
                     heroText, description, agent, image, url, type,
                     dateAdded, dateAvailable, pets, address
             FROM App\Models\Flats 
-            WHERE dateRemoved IS NULL
-            AND (address LIKE '%$search%'
-            OR heroText LIKE '%$search%'
-            OR description LIKE '%$search%')
-            ORDER BY dateAdded
-            LIMIT $limit
-            OFFSET $offset";
+            WHERE dateRemoved IS NULL "
+            . $filter .
+            " ORDER BY dateAdded";
 
         $flats = $app->modelsManager->executeQuery($phql);
 
